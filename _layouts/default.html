@@ -35,16 +35,16 @@ layout: compress
     {% endif %}
 
     {% if page.url %}
-      <meta content="{{ site.url }}{{ page.url }}" property="og:url">
+      <meta content="{{ site.url }}{{ site.baseurl }}{{ page.url }}" property="og:url">
     {% endif %}
 
     {% if page.date %}
       <meta content="{{ page.date | date_to_xmlschema }}" property="article:published_time">
-      <meta content="{{ site.url }}/about/" property="article:author">
+      <meta content="{{ site.url }}{{ site.baseurl }}/about/" property="article:author">
     {% endif %}
 
     {% if page.image %}
-      <meta content="{{ site.url }}/static/img/posts/{{ page.image }}" property="og:image">
+      <meta content="{{ site.url }}{{ site.baseurl }}/static/img/posts/{{ page.image }}" property="og:image">
     {% endif %}
 
     {% if page.categories %}
@@ -70,7 +70,7 @@ layout: compress
     {% endif %}
 
     {% if page.url %}
-      <meta name="twitter:url" content="{{ site.url }}{{ page.url }}">
+      <meta name="twitter:url" content="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
     {% endif %}
 
     {% if page.description %}
@@ -80,7 +80,7 @@ layout: compress
     {% endif %}
 
     {% if page.header-img %}
-      <meta name="twitter:image:src" content="{{ site.url }}/{{ page.header-img }}">
+      <meta name="twitter:image:src" content="{{ site.url }}{{ site.baseurl }}/{{ page.header-img }}">
     {% endif %}
 
     <!-- Font awesome icons -->
@@ -146,7 +146,7 @@ layout: compress
         {{ content }}
         <footer>
           &copy; {{ site.author }}
-          {% if site.github %}
+          {% if site.website %}
             - <a href="{{ site.website }}" target="_blank">{{ site.website }}</a> - Powered by Jekyll. A theme by <a href="https://agusmakmun.github.io" target="_blank">Agus Makmun</a>.
           {% endif %}
           <!-- <div class="btn-github" style="float:right;">
