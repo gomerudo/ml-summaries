@@ -41,6 +41,7 @@ urls:
 
 url: "https://gomerudo.github.io"
 baseurl: "/ml-summaries"
+newbaseurl: "/ml-summaries"
 paginate: 20
 per_page: 20
 paginate_path: "/page/:num/"
