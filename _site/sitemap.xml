@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>ML summaries</title>
+    <description>My own summaries from ML papers</description>
+    <link>http://localhost:4000/ml-summaries</link>
+    <atom:link href="http://localhost:4000/ml-summaries/sitemap.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Tue, 03 Mar 2020 23:35:08 -0600</pubDate>
+    <lastBuildDate>Tue, 03 Mar 2020 23:35:08 -0600</lastBuildDate>
+    <generator>Jekyll v3.8.5</generator>
+    
+      <item>
+        <title>Weight Agnostic Neural Networks (Gaier and Ha)</title>
+        <description>&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;#introduction&quot;&gt;Introduction&lt;/a&gt;
+    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#background&quot;&gt;Background&lt;/a&gt;
+        &lt;ul&gt;
+          &lt;li&gt;&lt;a href=&quot;#neural-architecture-search-nas&quot;&gt;Neural Architecture Search (NAS)&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#evolutionary-algorithms-eas&quot;&gt;Evolutionary Algorithms (EAs)&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#neuroevolution-of-augmenting-topologies-neat&quot;&gt;NeuroEvolution of Augmenting Topologies (NEAT)&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#dominance-relations&quot;&gt;Dominance relations&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#the-approach-in-a-nutshell&quot;&gt;The approach in a nutshell&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#understanding-the-key-elements&quot;&gt;Understanding the key elements&lt;/a&gt;
+        &lt;ul&gt;
+          &lt;li&gt;&lt;a href=&quot;#the-initial-set-of-architectures&quot;&gt;The initial set of architectures&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#the-rollouts&quot;&gt;The rollouts&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#the-fitness-values&quot;&gt;The fitness values&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#the-mutation-operators&quot;&gt;The mutation operators&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#experiments-results-and-claims&quot;&gt;Experiments, results, and claims&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#my-feelings-about-the-paper&quot;&gt;My feelings about the paper&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;I got aware of this paper at the NeurIPS 2019 conference in Vancouver. You can find the official paper &lt;a href=&quot;https://arxiv.org/abs/1906.04358&quot; target=&quot;_blank&quot;&gt;here&lt;/a&gt;, and an interactive version &lt;a href=&quot;https://weightagnostic.github.io&quot; target=&quot;_blank&quot;&gt;at this link&lt;/a&gt;. The source code is hosted in &lt;a href=&quot;https://github.com/google/brain-tokyo-workshop/tree/master/WANNRelease&quot; target=&quot;_blank&quot;&gt;this GitHub repo&lt;/a&gt; — although it is a bit hard to get through it because of the directory structure.&lt;/p&gt;
+
+&lt;p&gt;The main highlight of the paper is that &lt;em&gt;artificially crafted Neural Networks with a single weight value — shared by all neurons and with no training — achieve competitive performance on popular baselines&lt;/em&gt;. Such networks are labeled as Weight-Agnostic Neural Networks (WNNs). Before going through the paper, I recommend checking some basic concepts about simple neural network architectures, evolutionary algorithms, image classification, and reinforcement learning.&lt;/p&gt;
+
+&lt;h3 id=&quot;background&quot;&gt;Background&lt;/h3&gt;
+
+&lt;h4 id=&quot;neural-architecture-search-nas&quot;&gt;Neural Architecture Search (NAS)&lt;/h4&gt;
+
+&lt;p&gt;In a nutshell, the ultimate goal of NAS is to get rid of humans when selecting/designing the best possible architecture for a dataset. It does so by creating algorithms to automatically select the best arrangement of layers and the best hyperparameters. We can find a good number of papers dealing with this, and every approach has its strengths and weaknesses, but perhaps the one weakness they all share is the expensiveness of the training and evaluation of the neural networks. Why is this a problem? Because in a search process, we got to compare a significant number of neural architectures to see which ones perform best, based on its train/test accuracy. If we were to compare, let’s say 10, it would not be a problem if each of the networks would take 2 minutes to train, but if we have to deal with thousands of architectures then it starts being a problem.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;If you want to read more about NAS, I recommend the &lt;a href=&quot;https://arxiv.org/abs/1808.05377&quot; target=&quot;_blank&quot;&gt;survey by Elsken et al.&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h4 id=&quot;evolutionary-algorithms-eas&quot;&gt;Evolutionary Algorithms (EAs)&lt;/h4&gt;
+
+&lt;p&gt;An EA is an optimization method inspired by biological evolution. In short, it claims that, for a given problem, you can start with a set of random solutions (a population), which will be altered with some operations (crossover and mutation), so that they can “evolve” into a better solution, similar to what nature does with species.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Evolutionary_algorithm#Implementation&quot; target=&quot;_blank&quot;&gt;Wikipedia’s pseudo-code&lt;/a&gt; summarizes the generic EA steps as follow:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Generate the initial population of organisms randomly (&lt;strong&gt;first generation&lt;/strong&gt;).&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Repeat&lt;/strong&gt; the following &lt;strong&gt;regenerational steps&lt;/strong&gt; until termination:
+    &lt;ol&gt;
+      &lt;li&gt;&lt;strong&gt;Evaluate&lt;/strong&gt; the &lt;strong&gt;fitness of each individual&lt;/strong&gt; in that population (i.e., a measure of their quality).&lt;/li&gt;
+      &lt;li&gt;&lt;strong&gt;Select&lt;/strong&gt; the &lt;strong&gt;fittest&lt;/strong&gt; organisms &lt;strong&gt;for reproduction&lt;/strong&gt;.&lt;/li&gt;
+      &lt;li&gt;&lt;strong&gt;Breed new organisms through crossover and mutation&lt;/strong&gt; operations to give birth to offspring.&lt;/li&gt;
+      &lt;li&gt;&lt;strong&gt;Evaluate&lt;/strong&gt; the fitness of &lt;strong&gt;new organisms&lt;/strong&gt;.&lt;/li&gt;
+      &lt;li&gt;&lt;strong&gt;Replace&lt;/strong&gt; the &lt;strong&gt;least-fit&lt;/strong&gt; organisms of the population &lt;strong&gt;with new organisms&lt;/strong&gt;.&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The loop of step 2 can be implemented in different ways, and the substeps can be mixed depending on the approach.&lt;/p&gt;
+
+&lt;h4 id=&quot;neuroevolution-of-augmenting-topologies-neat&quot;&gt;NeuroEvolution of Augmenting Topologies (NEAT)&lt;/h4&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://nn.cs.utexas.edu/keyword?stanley:ec02&quot; blank=&quot;_target&quot;&gt;NEAT (2002)&lt;/a&gt; is an EA approach to NAS. The algorithm for Weight-Agnostic Neural Networks is highly inspired by it, thus it is convenient to take a quick look at it.&lt;/p&gt;
+
+&lt;p&gt;NEAT encodes the networks into &lt;em&gt;genomes&lt;/em&gt;, as shown in Figure 1. A &lt;em&gt;genome&lt;/em&gt; contains a list of &lt;em&gt;connection genes&lt;/em&gt; which capture the topology of the network (i.e., the architecture). Each element in the list has 4 main attributes: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;in&lt;/code&gt; node, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;out&lt;/code&gt; node, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;weight&lt;/code&gt;, and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;innovation number&lt;/code&gt; (a counter of the latest generation in which the node was mutated). The remaining attribute (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;enabled&lt;/code&gt;) will help during the mutations.&lt;/p&gt;
+
+&lt;figure&gt;
+&lt;p&gt;&lt;img src=&quot;/ml-summaries/static/img/posts/2019-02-11/wnns-neat-genome.png&quot; alt=&quot;Example of a Genome in NEAT&quot; width=&quot;75%&quot; /&gt;&lt;/p&gt;
+  &lt;figcaption&gt;Figure 1: Example of a Genome in NEAT&lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;&lt;br /&gt;
+The goal is to give birth to the best possible network. The pseudo-code is:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Generate &lt;strong&gt;initial population&lt;/strong&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Repeat&lt;/strong&gt; &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;m&lt;/code&gt; times:
+    &lt;ol&gt;
+      &lt;li&gt;&lt;strong&gt;Compute the fitness&lt;/strong&gt; of the organisms.&lt;/li&gt;
+      &lt;li&gt;Generate &lt;strong&gt;offspring&lt;/strong&gt; according to fitness.&lt;/li&gt;
+      &lt;li&gt;&lt;strong&gt;Replace the population&lt;/strong&gt; with offspring.&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Let’s understand each of the key elements.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;The initial population&lt;/strong&gt;. NEAT considers a &lt;em&gt;uniform&lt;/em&gt; first generation of &lt;em&gt;minimal networks&lt;/em&gt;. A &lt;em&gt;minimal network&lt;/em&gt; is one with only inputs and outputs (i.e., no hidden nodes). &lt;em&gt;Uniform&lt;/em&gt; seems to mean that all the organisms are the same (fully-connected), and just the weights differ. The initial population is of size &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;N&lt;/code&gt; and is kept constant through all iterations.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Evaluation of fitness&lt;/strong&gt;. To evaluate the fitness of individuals, NEAT clusters the population into &lt;em&gt;species&lt;/em&gt;; i.e., similar topologies are put together. Members of the same species will have similar fitness values. Given two organisms &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;y&lt;/code&gt;, it is possible to compute a number &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;δ = δ(x, y)&lt;/code&gt; that measures how similar they are. Hence, given a so-called &lt;em&gt;compatibility threshold&lt;/em&gt; &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;δ_t&lt;/code&gt;, it is possible to cluster the population by comparing &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;δ &amp;lt; δ_t&lt;/code&gt;. The fitness &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f_x&lt;/code&gt; of organism &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x&lt;/code&gt;, belonging to species &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;s_i&lt;/code&gt;, is a function of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;s_i&lt;/code&gt; and the reward &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;r_x&lt;/code&gt; of the network: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fx=f(s_i, r_x)&lt;/code&gt;. The reward can be the accuracy of the network or any other measure of its performance in a given task. To see the actual formulas, consult page 13 of the &lt;a href=&quot;http://nn.cs.utexas.edu/keyword?stanley:ec02&quot; blank=&quot;_target&quot;&gt;NEAT paper&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Generating the offspring&lt;/strong&gt;. In each generation, the whole population (the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;N&lt;/code&gt; organisms) will be replaced by the offspring. The offspring is &lt;em&gt;per species&lt;/em&gt;. 25% of the offspring (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;A = 0.25 * N&lt;/code&gt;) results from mutation without crossover, and (presumably) 75% (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;B = 0.75 * N&lt;/code&gt;) from reproduction (crossover + posterior mutation). The first step for reproduction is to eliminate the lowest-performing organisms from the entire population (the “lowest” criteria is not mentioned in the paper, sorry). Then, for each species &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;s_i&lt;/code&gt;, the within-species fitness sum is computed: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;F_i = sum_all(f_x)&lt;/code&gt; for all &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x&lt;/code&gt; in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;s_i&lt;/code&gt;. Next, we compute the proportion of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;F_i&lt;/code&gt; with respect to all species: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;o_i = F_i / sum_all(F_j)&lt;/code&gt;. Each species &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;s_i&lt;/code&gt; gets assigned a number &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;o_i * B&lt;/code&gt; of offspring. It is mating time now!&lt;/p&gt;
+
+&lt;p&gt;The specifics of mutation and crossover are as follow:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Mutation&lt;/strong&gt;: There are three mutation operators: &lt;em&gt;weight perturbation&lt;/em&gt;, &lt;em&gt;add connection&lt;/em&gt;, and &lt;em&gt;add node&lt;/em&gt;. I am skipping the first one because we will not need it for WNNs. &lt;u&gt;Add connection&lt;/u&gt; selects two unconnected nodes (presumably at random) and links them with a new random weight &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;w&lt;/code&gt;. &lt;u&gt;Add node&lt;/u&gt; selects an existing connection (presumably at random too) with some weight &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;w_c&lt;/code&gt; and splits it in two, placing a new node in between. The new weights are &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;w_in = 1&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;w_out = w_c&lt;/code&gt;. The old connection is set to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DISABLED&lt;/code&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Crossover&lt;/strong&gt;: When crossing over, genomes &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;y&lt;/code&gt; are lined up as shown in Figure 2. If two genes &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x[i]&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;y[i]&lt;/code&gt; have the same &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;innovation number&lt;/code&gt; they are called &lt;em&gt;matching genes&lt;/em&gt;. If they are not matching, then they are either &lt;em&gt;disjoint&lt;/em&gt; (if the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;innovation number&lt;/code&gt; of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x[i]&lt;/code&gt; &amp;lt;= &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;y[i]&lt;/code&gt;, or vice versa) or &lt;em&gt;excess&lt;/em&gt; (if the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;innovation number&lt;/code&gt; of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x[i]&lt;/code&gt; &amp;gt; &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;y[i]&lt;/code&gt;, or vice versa). At the moment of selecting the genes for the offspring, &lt;em&gt;matching genes&lt;/em&gt; are selected at random from either parent and &lt;em&gt;excess&lt;/em&gt;/&lt;em&gt;disjoint&lt;/em&gt; are taken from the most-fit parent (if they are equally fit then they are chosen randomly).&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure&gt;
+&lt;p&gt;&lt;img src=&quot;/ml-summaries/static/img/posts/2019-02-11/wnns-neat-crossover.png&quot; alt=&quot;Crossover in NEAT&quot; width=&quot;75%&quot; /&gt;&lt;/p&gt;
+  &lt;figcaption&gt;Figure 2. Crossover in NEAT. The top numbers represent the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;innovation number&lt;/code&gt;.&lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;&lt;br /&gt;
+There are some specifics about the NEAT implementation that you can consult on pages 14 and 15 (section: “Performance Evaluations”) of the paper. But roughly, this is what you need to understand WNNs.&lt;/p&gt;
+
+&lt;h4 id=&quot;dominance-relations&quot;&gt;Dominance relations&lt;/h4&gt;
+
+&lt;p&gt;&lt;em&gt;Dominance&lt;/em&gt; is a concept from &lt;a href=&quot;https://en.wikipedia.org/wiki/Multi-objective_optimization&quot; target=&quot;_blank&quot;&gt;multi-objective optimization&lt;/a&gt;, where we want to find the optimal value (minimum or maximum) for a set of functions. That is, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;min( f_1(x), f_2(x), ... , f_k(x) )&lt;/code&gt;, where &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;k&lt;/code&gt; is the number of objectives, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x* in X&lt;/code&gt; is called a &lt;em&gt;feasible solution&lt;/em&gt;, and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;X&lt;/code&gt; is the &lt;em&gt;feasible set&lt;/em&gt; of decision vectors. A vector &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;z* := &amp;lt; f_1(x*), f_2(x*), ... f_k(x*)&amp;gt;&lt;/code&gt; for a feasible solution &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x*&lt;/code&gt; is called an &lt;em&gt;outcome&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;A feasible solution &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x1&lt;/code&gt; is said to (Pareto) &lt;strong&gt;dominate&lt;/strong&gt; a solution &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x2&lt;/code&gt; (for minimization) if:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f_i(x1) &amp;lt;= f_i(x_2)&lt;/code&gt; &lt;strong&gt;for all&lt;/strong&gt; indices &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;i in {1, 2, ..., k}&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f_j(x1) &amp;lt; f_i(x_2)&lt;/code&gt; &lt;strong&gt;for at least one&lt;/strong&gt; index &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;j in {1, 2, ..., k}&lt;/code&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;In words, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x1&lt;/code&gt; dominates &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x2&lt;/code&gt; if &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x2&lt;/code&gt; does not improve any of the objectives &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f_i&lt;/code&gt;  when compared to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x1&lt;/code&gt;, and there is at least one &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f_i&lt;/code&gt; for which &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x1&lt;/code&gt; is strictly better than &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x2&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;A solution &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x*&lt;/code&gt; is called &lt;em&gt;Pareto optimal&lt;/em&gt; (a.k.a. non-dominated or Pareto efficient) if there does not exist another solution that dominates it. The set &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;F&lt;/code&gt; of Pareto optimal solutions is called &lt;em&gt;Pareto _front&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;It is possible to group the solutions &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x_i&lt;/code&gt; in fronts. First, using the set &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;X&lt;/code&gt; we need to compute the first front &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;F_1&lt;/code&gt;. Second, we compute &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;X' = X - F1&lt;/code&gt;  and compute a new front &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;F_2&lt;/code&gt;. We can repeat this process until no more fronts can be obtained. An efficient algorithm to do this is on &lt;a href=&quot;http://www.dmi.unict.it/mpavone/nc-cs/materiale/NSGA-II.pdf&quot; target=&quot;_blank&quot;&gt;Page 3 of this paper&lt;/a&gt; cited by Gaier and Ha.&lt;/p&gt;
+
+&lt;h3 id=&quot;the-approach-in-a-nutshell&quot;&gt;The approach in a nutshell&lt;/h3&gt;
+
+&lt;p&gt;Gaier and Ha propose a search algorithm where the constructed &lt;strong&gt;networks will not be trained&lt;/strong&gt;, saving us a lot of computational resources. The core of the algorithm is &lt;a href=&quot;#neuroevolution-of-augmenting-topologies-neat&quot;&gt;NEAT&lt;/a&gt; with some minor modifications:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;The &lt;strong&gt;initial population&lt;/strong&gt; is &lt;strong&gt;not uniform&lt;/strong&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;For every architecture a single weight&lt;/strong&gt; from the set &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;W = [-2, -1, 0, 1, 2]&lt;/code&gt; &lt;strong&gt;is used&lt;/strong&gt;. All neurons in the architecture will use this weight value and the network will infer with no training whatsoever. This is repeated for each weight in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;W&lt;/code&gt; (each trial is called a &lt;em&gt;rollout&lt;/em&gt;).&lt;/li&gt;
+  &lt;li&gt;The &lt;strong&gt;fitness considers performance&lt;/strong&gt; over the rollouts &lt;strong&gt;and complexity&lt;/strong&gt; of the networks.&lt;/li&gt;
+  &lt;li&gt;A &lt;strong&gt;new mutation operator&lt;/strong&gt; is used.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The algorithm was tested for reinforcement learning and image classification tasks. That means: searching for a neural network - and I cannot stress this enough - never training the candidates, and &lt;strong&gt;the network can exhibit acceptable performance&lt;/strong&gt; in the task.&lt;/p&gt;
+
+&lt;p&gt;Now, we just need to explain each of these aspects.&lt;/p&gt;
+
+&lt;h3 id=&quot;understanding-the-key-elements&quot;&gt;Understanding the key elements&lt;/h3&gt;
+
+&lt;h4 id=&quot;the-initial-set-of-architectures&quot;&gt;The initial set of architectures&lt;/h4&gt;
+
+&lt;p&gt;Similarly to NEAT, the WNNs algorithm start with &lt;em&gt;minimal topologies&lt;/em&gt;. By looking at an example in the WNNs’ paper (see Figure 3) it is possible to infer a small modification on what a minimal topology is. Instead of fully connected inputs/outputs, WNNs start from &lt;strong&gt;a population of networks with zero hidden nodes, which have inputs &lt;em&gt;randomly&lt;/em&gt; connected to outputs&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;h4 id=&quot;the-rollouts&quot;&gt;The rollouts&lt;/h4&gt;
+
+&lt;p&gt;The rollouts are the key aspect of how to measure the performance of the architectures. &lt;em&gt;A rollout&lt;/em&gt; is the evaluation of a network with one shared weight. The weights considered are in the set &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;W = [-2, -1, -0.5, +0.5, +1, +2]&lt;/code&gt;. For each weight in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;W&lt;/code&gt;, the network is evaluated: for RL that means obtaining a cumulative reward, and for image classification the accuracy.&lt;/p&gt;
+
+&lt;p&gt;After all evaluations, three measures are computed:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f_1&lt;/code&gt;: The average of the rollouts.&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f_2&lt;/code&gt;: The maximum rollout.&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f_3&lt;/code&gt;: The number of connections in the architecture.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&quot;the-fitness-values&quot;&gt;The fitness values&lt;/h4&gt;
+
+&lt;p&gt;Once the rollouts are finished, it is necessary to measure the &lt;strong&gt;fitness&lt;/strong&gt; of the architectures. The authors propose a probabilistic function as follows:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;In 20% of the times, the fitness is the rank after sorting by &lt;em&gt;dominance relations&lt;/em&gt; of the objectives &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f_1&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f_2&lt;/code&gt;.&lt;/li&gt;
+  &lt;li&gt;In 80% of the time, the fitness is the rank after sorting by &lt;em&gt;dominance relations&lt;/em&gt; of the objectives &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f_1&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f_3&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;the-mutation-operators&quot;&gt;The mutation operators&lt;/h4&gt;
+
+&lt;p&gt;The architectures are mutated via &lt;strong&gt;three operators&lt;/strong&gt;:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Insert new node&lt;/strong&gt;: Same as in NEAT, but without weights and with an activation function sampled at random from the set &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;[linear, step, sin, cosine, Gaussian, tanh, sigmoid, absolute-value, negative linear, ReLU]&lt;/code&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Add new connection&lt;/strong&gt;: Same as in NEAT, but without weights.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Change existing activation&lt;/strong&gt;: An existing node is chosen (presumably at random). Then, an activation function &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;F&lt;/code&gt; is randomly selected from the set &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;[linear, step, sin, cosine, Gaussian, tanh, sigmoid, absolute-value, negative linear, ReLU]&lt;/code&gt; and the node gets &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;F&lt;/code&gt; assigned.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;experiments-results-and-claims&quot;&gt;Experiments, results, and claims&lt;/h3&gt;
+
+&lt;p&gt;In progress …&lt;/p&gt;
+
+&lt;h3 id=&quot;my-feelings-about-the-paper&quot;&gt;My feelings about the paper&lt;/h3&gt;
+
+&lt;p&gt;In progress …&lt;/p&gt;
+
+&lt;!-- ### Conclusions --&gt;
+
+&lt;!-- Parsing JSON with Ruby is actually extremely easy. All you have to do is have the json gem installed (`gem install json`) and call the `JSON.parse` method on the JSON data to convert it to ruby hashes. If you look at this small program here, you can see how I have implemented parsing JSON in Ruby.
+
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;c1&quot;&gt;#!/usr/bin/env ruby&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'json'&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'net/http'&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'libnotify'&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;parsejson&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;file&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;http://api.openweathermap.org/data/2.5/find?q=London&amp;amp;mode=json&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Net&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;HTTP&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;get_response&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;parse&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;weatherjson&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;body&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;actual&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;JSON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;parse&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;weatherjson&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;# check for errors&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;actual&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;has_key?&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Error'&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;raise&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;error with the url&quot;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;results&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;actual&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;list&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;each&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;listitem&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;weather&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;listitem&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;weather&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;weather&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;each&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;weath&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;results&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;push&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;weath&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;description&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;main&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;listitem&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;main&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;temp&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;temp&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;273.15&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;results&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;push&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;%.2f&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;temp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;results&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+ --&gt;
+</description>
+        <pubDate>Mon, 10 Feb 2020 11:00:00 -0600</pubDate>
+        <link>http://localhost:4000/ml-summaries/nas/rl/imageclassification/neurips2019/2020/02/10/wnn-gaier.html</link>
+        <guid isPermaLink="true">http://localhost:4000/ml-summaries/nas/rl/imageclassification/neurips2019/2020/02/10/wnn-gaier.html</guid>
+        
+        
+        <category>NAS</category>
+        
+        <category>RL</category>
+        
+        <category>ImageClassification</category>
+        
+        <category>NeurIPS2019</category>
+        
+      </item>
+    
+  </channel>
+</rss>
