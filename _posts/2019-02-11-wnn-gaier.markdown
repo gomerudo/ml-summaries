@@ -1,11 +1,162 @@
 ---
 layout: post
-title:  Understanding <b>Weight Agnostic Neural Networks Adam (Gaier and Ha)</b>
-date:   2013-12-23 00:18:23 +0700
+title:  Weight Agnostic Neural Networks (Gaier and Ha)
+date:   2020-02-11 00:00:00 +0700
 categories: [NAS, RL, ImageClassification, NeurIPS2019]
 ---
 
-In progress...
+- [Introduction](#introduction)
+  - [Background](#background)
+    - [Neural Architecture Search (NAS)](#neural-architecture-search-nas)
+    - [Evolutionary Algorithms (EAs)](#evolutionary-algorithms-eas)
+    - [NeuroEvolution of Augmenting Topologies (NEAT)](#neuroevolution-of-augmenting-topologies-neat)
+    - [Dominance relations](#dominance-relations)
+  - [The approach in a nutshell](#the-approach-in-a-nutshell)
+  - [Understanding the key elements](#understanding-the-key-elements)
+    - [The initial set of architectures](#the-initial-set-of-architectures)
+    - [The rollouts](#the-rollouts)
+    - [The fitness values](#the-fitness-values)
+    - [The mutation operators](#the-mutation-operators)
+  - [Experiments, results, and claims](#experiments-results-and-claims)
+  - [My feelings about the paper](#my-feelings-about-the-paper)
+
+## Introduction
+
+I got aware of this paper at the NeurIPS 2019 conference in Vancouver. You can find the official paper <a href="https://arxiv.org/abs/1906.04358" target="_blank">here</a>, and an interactive version <a href="https://weightagnostic.github.io" target="_blank">at this link</a>. The source code is hosted in <a href="https://github.com/google/brain-tokyo-workshop/tree/master/WANNRelease" target="_blank">this GitHub repo</a> — although it is a bit hard to get through it because of the directory structure.
+
+The main highlight of the paper is that _artificially crafted Neural Networks with a single weight value — shared by all neurons and with no training — achieve competitive performance on popular baselines_. Such networks are labeled as Weight-Agnostic Neural Networks (WNNs). Before going through the paper, I recommend checking some basic concepts about simple neural network architectures, evolutionary algorithms, image classification, and reinforcement learning.
+
+### Background
+
+#### Neural Architecture Search (NAS)
+
+In a nutshell, the ultimate goal of NAS is to get rid of humans when selecting/designing the best possible architecture for a dataset. It does so by creating algorithms to automatically select the best arrangement of layers and the best hyperparameters. We can find a good number of papers dealing with this, and every approach has its strengths and weaknesses, but perhaps the one weakness they all share is the expensiveness of the training and evaluation of the neural networks. Why is this a problem? Because in a search process, we got to compare a significant number of neural architectures to see which ones perform best, based on its train/test accuracy. If we were to compare, let's say 10, it would not be a problem if each of the networks would take 2 minutes to train, but if we have to deal with thousands of architectures then it starts being a problem.
+
+> If you want to read more about NAS, I recommend the <a href="https://arxiv.org/abs/1808.05377" target="_blank">survey by Elsken et al.</a>
+
+#### Evolutionary Algorithms (EAs)
+
+An EA is an optimization method inspired by biological evolution. In short, it claims that, for a given problem, you can start with a set of random solutions (a population), which will be altered with some operations (crossover and mutation), so that they can "evolve" into a better solution, similar to what nature does with species.
+
+<a href="https://en.wikipedia.org/wiki/Evolutionary_algorithm#Implementation" target="_blank">Wikipedia's pseudo-code</a> summarizes the generic EA steps as follow:
+
+1. Generate the initial population of organisms randomly (**first generation**).
+2. **Repeat** the following **regenerational steps** until termination:
+   1. **Evaluate** the **fitness of each individual** in that population (i.e., a measure of their quality).
+   2. **Select** the **fittest** organisms **for reproduction**.
+   3. **Breed new organisms through crossover and mutation** operations to give birth to offspring.
+   4. **Evaluate** the fitness of **new organisms**.
+   5. **Replace** the **least-fit** organisms of the population **with new organisms**.
+
+The loop of step 2 can be implemented in different ways, and the substeps can be mixed depending on the approach.
+
+#### NeuroEvolution of Augmenting Topologies (NEAT)
+
+<a href="http://nn.cs.utexas.edu/keyword?stanley:ec02" blank="_target">NEAT (2002)</a> is an EA approach to NAS. The algorithm for Weight-Agnostic Neural Networks is highly inspired by it, thus it is convenient to take a quick look at it.
+
+NEAT encodes the networks into _genomes_, as shown in Figure 1. A _genome_ contains a list of _connection genes_ which capture the topology of the network (i.e., the architecture). Each element in the list has 4 main attributes: `in` node, `out` node, `weight`, and `innovation number` (a counter of the latest generation in which the node was mutated). The remaining attribute (`enabled`) will help during the mutations.
+
+{% figure caption:"Figure 1: Example of a Genome in NEAT" %}
+<img src="{{ site.baseurl }}/static/img/posts/2019-02-11/wnns-neat-genome.png" alt="Example of a Genome in NEAT" width="75%">
+{% endfigure %}
+
+<br/>
+The goal is to give birth to the best possible network. The pseudo-code is:
+
+1. Generate **initial population**.
+2. **Repeat** `m` times:
+   1. **Compute the fitness** of the organisms.
+   2. Generate **offspring** according to fitness.
+   3. **Replace the population** with offspring.
+
+
+Let's understand each of the key elements.
+
+**The initial population**. NEAT considers a _uniform_ first generation of _minimal networks_. A _minimal network_ is one with only inputs and outputs (i.e., no hidden nodes). _Uniform_ seems to mean that all the organisms are the same (fully-connected), and just the weights differ. The initial population is of size `N` and is kept constant through all iterations.
+
+**Evaluation of fitness**. To evaluate the fitness of individuals, NEAT clusters the population into _species_; i.e., similar topologies are put together. Members of the same species will have similar fitness values. Given two organisms `x` and `y`, it is possible to compute a number `δ = δ(x, y)` that measures how similar they are. Hence, given a so-called _compatibility threshold_ `δ_t`, it is possible to cluster the population by comparing `δ < δ_t`. The fitness `f_x` of organism `x`, belonging to species `s_i`, is a function of `s_i` and the reward `r_x` of the network: `fx=f(s_i, r_x)`. The reward can be the accuracy of the network or any other measure of its performance in a given task. To see the actual formulas, consult page 13 of the <a href="http://nn.cs.utexas.edu/keyword?stanley:ec02" blank="_target">NEAT paper</a>. 
+
+**Generating the offspring**. In each generation, the whole population (the `N` organisms) will be replaced by the offspring. The offspring is _per species_. 25% of the offspring (`A = 0.25 * N`) results from mutation without crossover, and (presumably) 75% (`B = 0.75 * N`) from reproduction (crossover + posterior mutation). The first step for reproduction is to eliminate the lowest-performing organisms from the entire population (the "lowest" criteria is not mentioned in the paper, sorry). Then, for each species `s_i`, the within-species fitness sum is computed: `F_i = sum_all(f_x)` for all `x` in `s_i`. Next, we compute the proportion of `F_i` with respect to all species: `o_i = F_i / sum_all(F_j)`. Each species `s_i` gets assigned a number `o_i * B` of offspring. It is mating time now!
+
+The specifics of mutation and crossover are as follow:
+
+- **Mutation**: There are three mutation operators: _weight perturbation_, _add connection_, and _add node_. I am skipping the first one because we will not need it for WNNs. <u>Add connection</u> selects two unconnected nodes (presumably at random) and links them with a new random weight `w`. <u>Add node</u> selects an existing connection (presumably at random too) with some weight `w_c` and splits it in two, placing a new node in between. The new weights are `w_in = 1` and `w_out = w_c`. The old connection is set to `DISABLED`.
+- **Crossover**: When crossing over, genomes `x` and `y` are lined up as shown in Figure 2. If two genes `x[i]` and `y[i]` have the same `innovation number` they are called _matching genes_. If they are not matching, then they are either _disjoint_ (if the `innovation number` of `x[i]` <= `y[i]`, or vice versa) or _excess_ (if the `innovation number` of `x[i]` > `y[i]`, or vice versa). At the moment of selecting the genes for the offspring, _matching genes_ are selected at random from either parent and _excess_/_disjoint_ are taken from the most-fit parent (if they are equally fit then they are chosen randomly).
+
+{% figure caption:"Figure 2. Crossover in NEAT. The top numbers represent the `innovation number`." %}
+<img src="{{ site.baseurl }}/static/img/posts/2019-02-11/wnns-neat-crossover.png" alt="Crossover in NEAT" width="75%">
+{% endfigure %}
+
+<br/>
+There are some specifics about the NEAT implementation that you can consult on pages 14 and 15 (section: "Performance Evaluations") of the paper. But roughly, this is what you need to understand WNNs.
+
+#### Dominance relations
+
+_Dominance_ is a concept from <a href="https://en.wikipedia.org/wiki/Multi-objective_optimization" target="_blank">multi-objective optimization</a>, where we want to find the optimal value (minimum or maximum) for a set of functions. That is, `min( f_1(x), f_2(x), ... , f_k(x) )`, where `k` is the number of objectives, `x* in X` is called a _feasible solution_, and `X` is the _feasible set_ of decision vectors. A vector `z* := < f_1(x*), f_2(x*), ... f_k(x*)>` for a feasible solution `x*` is called an _outcome_.
+
+A feasible solution `x1` is said to (Pareto) **dominate** a solution `x2` (for minimization) if:
+1. `f_i(x1) <= f_i(x_2)` **for all** indices `i in {1, 2, ..., k}`
+2. `f_j(x1) < f_i(x_2)` **for at least one** index `j in {1, 2, ..., k}`
+
+In words, `x1` dominates `x2` if `x2` does not improve any of the objectives `f_i`  when compared to `x1`, and there is at least one `f_i` for which `x1` is strictly better than `x2`.
+
+A solution `x*` is called _Pareto optimal_ (a.k.a. non-dominated or Pareto efficient) if there does not exist another solution that dominates it. The set `F` of Pareto optimal solutions is called _Pareto _front_.
+
+It is possible to group the solutions `x_i` in fronts. First, using the set `X` we need to compute the first front `F_1`. Second, we compute `X' = X - F1`  and compute a new front `F_2`. We can repeat this process until no more fronts can be obtained. An efficient algorithm to do this is on <a href="http://www.dmi.unict.it/mpavone/nc-cs/materiale/NSGA-II.pdf" target="_blank">Page 3 of this paper</a> cited by Gaier and Ha.
+
+### The approach in a nutshell
+
+Gaier and Ha propose a search algorithm where the constructed **networks will not be trained**, saving us a lot of computational resources. The core of the algorithm is [NEAT](#neuroevolution-of-augmenting-topologies-neat) with some minor modifications:
+
+1. The **initial population** is **not uniform**.
+2. **For every architecture a single weight** from the set `W = [-2, -1, 0, 1, 2]` **is used**. All neurons in the architecture will use this weight value and the network will infer with no training whatsoever. This is repeated for each weight in `W` (each trial is called a _rollout_).
+3. The **fitness considers performance** over the rollouts **and complexity** of the networks.
+4. A **new mutation operator** is used.
+
+The algorithm was tested for reinforcement learning and image classification tasks. That means: searching for a neural network - and I cannot stress this enough - never training the candidates, and **the network can exhibit acceptable performance** in the task.
+
+Now, we just need to explain each of these aspects.
+
+### Understanding the key elements
+
+#### The initial set of architectures
+
+Similarly to NEAT, the WNNs algorithm start with _minimal topologies_. By looking at an example in the WNNs' paper (see Figure 3) it is possible to infer a small modification on what a minimal topology is. Instead of fully connected inputs/outputs, WNNs start from **a population of networks with zero hidden nodes, which have inputs _randomly_ connected to outputs**.
+
+#### The rollouts
+
+The rollouts are the key aspect of how to measure the performance of the architectures. _A rollout_ is the evaluation of a network with one shared weight. The weights considered are in the set `W = [-2, -1, -0.5, +0.5, +1, +2]`. For each weight in `W`, the network is evaluated: for RL that means obtaining a cumulative reward, and for image classification the accuracy.
+
+After all evaluations, three measures are computed:
+1. `f_1`: The average of the rollouts.
+2. `f_2`: The maximum rollout.
+3. `f_3`: The number of connections in the architecture.
+
+#### The fitness values
+
+Once the rollouts are finished, it is necessary to measure the **fitness** of the architectures. The authors propose a probabilistic function as follows:
+
+- In 20% of the times, the fitness is the rank after sorting by _dominance relations_ of the objectives `f_1` and `f_2`.
+- In 80% of the time, the fitness is the rank after sorting by _dominance relations_ of the objectives `f_1` and `f_3`.
+
+#### The mutation operators
+
+The architectures are mutated via **three operators**:
+
+- **Insert new node**: Same as in NEAT, but without weights and with an activation function sampled at random from the set `[linear, step, sin, cosine, Gaussian, tanh, sigmoid, absolute-value, negative linear, ReLU]`.
+- **Add new connection**: Same as in NEAT, but without weights.
+- **Change existing activation**: An existing node is chosen (presumably at random). Then, an activation function `F` is randomly selected from the set `[linear, step, sin, cosine, Gaussian, tanh, sigmoid, absolute-value, negative linear, ReLU]` and the node gets `F` assigned.
+
+### Experiments, results, and claims
+
+In progress ...
+
+### My feelings about the paper
+
+In progress ...
+
+<!-- ### Conclusions -->
+
 
 <!-- Parsing JSON with Ruby is actually extremely easy. All you have to do is have the json gem installed (`gem install json`) and call the `JSON.parse` method on the JSON data to convert it to ruby hashes. If you look at this small program here, you can see how I have implemented parsing JSON in Ruby.
 
