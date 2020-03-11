@@ -2,7 +2,7 @@
 layout: post
 title:  Weight Agnostic Neural Networks (Gaier and Ha)
 date:   2020-03-10 00:00:00 +0700
-categories: [NAS, RL, ImageClassification, NeurIPS2019]
+categories: [NAS, EvolutionaryAlgorithms, RL, ImageClassification, NeurIPS2019]
 author: Jorge Gomez
 ---
 
