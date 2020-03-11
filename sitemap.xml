@@ -3,10 +3,10 @@
   <channel>
     <title>ML summaries</title>
     <description>My own summaries from ML papers</description>
-    <link>http://localhost:4000/ml-summaries</link>
-    <atom:link href="http://localhost:4000/ml-summaries/sitemap.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Tue, 10 Mar 2020 20:18:40 -0600</pubDate>
-    <lastBuildDate>Tue, 10 Mar 2020 20:18:40 -0600</lastBuildDate>
+    <link>https://gomerudo.github.io/ml-summaries</link>
+    <atom:link href="https://gomerudo.github.io/ml-summaries/sitemap.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Tue, 10 Mar 2020 20:24:12 -0600</pubDate>
+    <lastBuildDate>Tue, 10 Mar 2020 20:24:12 -0600</lastBuildDate>
     <generator>Jekyll v3.8.5</generator>
     
       <item>
@@ -317,8 +317,8 @@ With these numbers, it is not clear yet what the essential advantage of a WANN i
  --&gt;
 </description>
         <pubDate>Mon, 09 Mar 2020 11:00:00 -0600</pubDate>
-        <link>http://localhost:4000/ml-summaries/nas/evolutionaryalgorithms/rl/imageclassification/neurips2019/2020/03/09/wnn-gaier.html</link>
-        <guid isPermaLink="true">http://localhost:4000/ml-summaries/nas/evolutionaryalgorithms/rl/imageclassification/neurips2019/2020/03/09/wnn-gaier.html</guid>
+        <link>https://gomerudo.github.io/ml-summaries/nas/evolutionaryalgorithms/rl/imageclassification/neurips2019/2020/03/09/wnn-gaier.html</link>
+        <guid isPermaLink="true">https://gomerudo.github.io/ml-summaries/nas/evolutionaryalgorithms/rl/imageclassification/neurips2019/2020/03/09/wnn-gaier.html</guid>
         
         
         <category>NAS</category>
