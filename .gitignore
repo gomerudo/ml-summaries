@@ -3,6 +3,15 @@
 .jekyll-cache
 .jekyll-metadata
 vendor
+**/*.log
 
 # OS X
 **/.DS_Store
+
+# Node
+**/node_modules
+package-lock.json
+db.json
+
+# Hexo
+**/public
