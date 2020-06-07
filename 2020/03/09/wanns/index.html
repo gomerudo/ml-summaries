@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="IntroductionI got aware of this paper at the NeurIPS 2019 conference in Vancouver. You can find the official paper here, and an interactive version at this link. The source code is hosted in this GitH">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Weight Agnostic Neural Networks (Gaier and Ha)">
+<meta property="og:url" content="https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/index.html">
+<meta property="og:site_name" content="ML summaries">
+<meta property="og:description" content="IntroductionI got aware of this paper at the NeurIPS 2019 conference in Vancouver. You can find the official paper here, and an interactive version at this link. The source code is hosted in this GitH">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/wanns-neat-genome.png">
+<meta property="og:image" content="https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/wanns-neat-crossover.png">
+<meta property="og:image" content="https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/wanns-minimal-net.png">
+<meta property="og:image" content="https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/wanns-results-rl.png">
+<meta property="og:image" content="https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/wanns-results-ic.png">
+<meta property="article:published_time" content="2020-03-09T23:00:00.000Z">
+<meta property="article:modified_time" content="2020-06-05T22:14:11.000Z">
+<meta property="article:author" content="Jorge Gomez">
+<meta property="article:tag" content="RL">
+<meta property="article:tag" content="NeurIPS2019">
+<meta property="article:tag" content="NAS">
+<meta property="article:tag" content="EvolutionaryAlgorithms">
+<meta property="article:tag" content="ImageClassification">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/wanns-neat-genome.png">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/ml-summaries/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/ml-summaries/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/ml-summaries/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>Weight Agnostic Neural Networks (Gaier and Ha)</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/ml-summaries/css/style.css">
+
+    <!-- persian styles -->
+    
+      
+<link rel="stylesheet" href="/ml-summaries/css/rtl.css">
+
+    
+    <!-- rss -->
+    
+    
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/ml-summaries/">Home</a></li>
+         
+          <li><a href="/ml-summaries/about/">About</a></li>
+         
+          <li><a href="/ml-summaries/archives/">Writing</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/" target="_blank" rel="noopener"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&text=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&title=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&is_video=false&description=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Weight Agnostic Neural Networks (Gaier and Ha)&body=Check out this article: https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&title=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&title=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&title=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&title=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&name=Weight Agnostic Neural Networks (Gaier and Ha)&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&t=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Introduction"><span class="toc-number">1.</span> <span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Background"><span class="toc-number">2.</span> <span class="toc-text">Background</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Neural-Architecture-Search-NAS"><span class="toc-number">2.1.</span> <span class="toc-text">Neural Architecture Search (NAS)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Evolutionary-Algorithms-EAs"><span class="toc-number">2.2.</span> <span class="toc-text">Evolutionary Algorithms (EAs)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NeuroEvolution-of-Augmenting-Topologies-NEAT"><span class="toc-number">2.3.</span> <span class="toc-text">NeuroEvolution of Augmenting Topologies (NEAT)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dominance-relations"><span class="toc-number">2.4.</span> <span class="toc-text">Dominance relations</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The-approach-in-a-nutshell"><span class="toc-number">3.</span> <span class="toc-text">The approach in a nutshell</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Understanding-the-key-elements"><span class="toc-number">4.</span> <span class="toc-text">Understanding the key elements</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#The-initial-set-of-architectures"><span class="toc-number">4.1.</span> <span class="toc-text">The initial set of architectures</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#The-rollouts"><span class="toc-number">4.2.</span> <span class="toc-text">The rollouts</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#The-fitness-values"><span class="toc-number">4.3.</span> <span class="toc-text">The fitness values</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#The-mutation-operators"><span class="toc-number">4.4.</span> <span class="toc-text">The mutation operators</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Experiments-and-results"><span class="toc-number">5.</span> <span class="toc-text">Experiments and results</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Reinforcement-Learning"><span class="toc-number">5.1.</span> <span class="toc-text">Reinforcement Learning</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Experiment-setup"><span class="toc-number">5.1.1.</span> <span class="toc-text">Experiment setup</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Results"><span class="toc-number">5.1.2.</span> <span class="toc-text">Results</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Image-Classification"><span class="toc-number">5.2.</span> <span class="toc-text">Image Classification</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Experiment-setup-1"><span class="toc-number">5.2.1.</span> <span class="toc-text">Experiment setup</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Results-1"><span class="toc-number">5.2.2.</span> <span class="toc-text">Results</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#My-feelings-about-the-paper"><span class="toc-number">6.</span> <span class="toc-text">My feelings about the paper</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        Weight Agnostic Neural Networks (Gaier and Ha)
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">ML summaries</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2020-03-09T23:00:00.000Z" itemprop="datePublished">2020-03-09</time>
+        
+        (Updated: <time datetime="2020-06-05T22:14:11.000Z" itemprop="dateModified">2020-06-05</time>)
+        
+      
+    </div>
+
+
+      
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link" href="/ml-summaries/tags/EvolutionaryAlgorithms/" rel="tag">EvolutionaryAlgorithms</a>, <a class="tag-link" href="/ml-summaries/tags/ImageClassification/" rel="tag">ImageClassification</a>, <a class="tag-link" href="/ml-summaries/tags/NAS/" rel="tag">NAS</a>, <a class="tag-link" href="/ml-summaries/tags/NeurIPS2019/" rel="tag">NeurIPS2019</a>, <a class="tag-link" href="/ml-summaries/tags/RL/" rel="tag">RL</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>I got aware of this paper at the NeurIPS 2019 conference in Vancouver. You can find the official paper <a href="https://arxiv.org/abs/1906.04358" target="_blank">here</a>, and an interactive version <a href="https://weightagnostic.github.io" target="_blank">at this link</a>. The source code is hosted in <a href="https://github.com/google/brain-tokyo-workshop/tree/master/WANNRelease" target="_blank">this GitHub repo</a> — although it is a bit hard to get through it because of the directory structure.</p>
+<p>The main highlight of the paper is that <em>artificially crafted neural networks with a single weight value — shared by all neurons and with no training — achieve competitive performance on popular baselines</em>. Such networks are labeled as Weight-Agnostic Neural Networks (WANNs). Before going through the paper, I recommend checking some basic concepts about simple neural network architectures, evolutionary algorithms, image classification, and reinforcement learning.</p>
+<h2 id="Background"><a href="#Background" class="headerlink" title="Background"></a>Background</h2><h3 id="Neural-Architecture-Search-NAS"><a href="#Neural-Architecture-Search-NAS" class="headerlink" title="Neural Architecture Search (NAS)"></a>Neural Architecture Search (NAS)</h3><p>In a nutshell, the ultimate goal of NAS is to get rid of humans when selecting/designing the best architecture for a dataset. It does so by creating algorithms to automatically select the best arrangement of layers and the best hyperparameters. We can find a good number of papers dealing with this, and every approach has its strengths and weaknesses, but perhaps the one weakness they all share is the expensiveness of the training and evaluation of the neural networks. Why is this a problem? Because in a search process, we got to compare a significant number of neural architectures to see which ones perform best, based on its train/test accuracy. If we were to compare, let’s say 10, it would not be a problem if each of the networks took 2 minutes to train, but if we compare thousands of architectures then it starts being a problem.</p>
+<blockquote>
+<p>If you want to read more about NAS, I recommend the <a href="https://arxiv.org/abs/1808.05377" target="_blank">survey by Elsken et al.</a></p>
+</blockquote>
+<h3 id="Evolutionary-Algorithms-EAs"><a href="#Evolutionary-Algorithms-EAs" class="headerlink" title="Evolutionary Algorithms (EAs)"></a>Evolutionary Algorithms (EAs)</h3><p>An EA is an optimization method inspired by biological evolution. In short, it claims that, for a given problem, you can start with a set of random solutions (a population), which will be altered with some operations (crossover and mutation) so that they can “evolve” into a better solution, similar to what nature does with species.</p>
+<p><a href="https://en.wikipedia.org/wiki/Evolutionary_algorithm#Implementation" target="_blank">Wikipedia’s pseudo-code</a> summarizes the generic EA steps as follow:</p>
+<ol>
+<li>Generate the initial population of organisms randomly (<strong>first generation</strong>).</li>
+<li><strong>Repeat</strong> the following <strong>regenerational steps</strong> until termination:<ol>
+<li><strong>Evaluate</strong> the <strong>fitness of each organism</strong> in the population (i.e., a measure of their quality).</li>
+<li><strong>Select</strong> the <strong>fittest</strong> organisms <strong>for reproduction</strong>.</li>
+<li><strong>Breed new organisms through crossover and mutation</strong> operations to give birth to offspring.</li>
+<li><strong>Evaluate</strong> the fitness of <strong>new organisms</strong>.</li>
+<li><strong>Replace</strong> the <strong>least-fit</strong> organisms of the population <strong>with new organisms</strong>.</li>
+</ol>
+</li>
+</ol>
+<p>The loop of step 2 can variate in the order of the sub-steps, but this reflects the general idea.</p>
+<h3 id="NeuroEvolution-of-Augmenting-Topologies-NEAT"><a href="#NeuroEvolution-of-Augmenting-Topologies-NEAT" class="headerlink" title="NeuroEvolution of Augmenting Topologies (NEAT)"></a>NeuroEvolution of Augmenting Topologies (NEAT)</h3><p><a href="http://nn.cs.utexas.edu/keyword?stanley:ec02" target="_blank" rel="noopener" blank="_target">NEAT (2002)</a> is an EA approach to NAS. The algorithm for Weight-Agnostic Neural Networks is highly inspired by it, thus it is convenient to take a quick look at it.</p>
+<p>NEAT encodes the networks (i.e., the organisms) into <em>genomes</em>, as shown in Figure 1. A <em>genome</em> contains a list of <em>connection genes</em> which capture the topology of the network (i.e., the architecture). Each element in the list has 4 main attributes: <code>in</code> node, <code>out</code> node, <code>weight</code>, and <code>innovation number</code> (a counter of the latest generation in which the node was mutated). The remaining attribute (<code>enabled</code>) will help during the mutations because connections can change.</p>
+<img src="/ml-summaries/2020/03/09/wanns/wanns-neat-genome.png" class="" title="Figure 1: Example of a Genome in NEAT">
+
+<br/>
+NEAT's goal is to give birth to the best possible network with the next pseudo-code:
+
+<ol>
+<li>Generate <strong>initial population</strong>.</li>
+<li><strong>Repeat</strong> <code>m</code> times:<ol>
+<li><strong>Compute the fitness</strong> of the organisms.</li>
+<li>Generate <strong>offspring</strong> according to fitness.</li>
+<li><strong>Replace the population</strong> with the offspring.</li>
+</ol>
+</li>
+</ol>
+<p>Let’s understand each of the key elements.</p>
+<p><strong>The initial population</strong>. NEAT considers a <em>uniform</em> first generation of <em>minimal networks</em>. A <em>minimal network</em> is one with only inputs and outputs (i.e., no hidden nodes). <em>Uniform</em> seems to mean that all the organisms are the same (fully-connected), and just the weights differ. The initial population is of size <code>N</code> and is kept constant through all iterations.</p>
+<p><strong>Evaluation of fitness</strong>. To evaluate the fitness of the organisms, NEAT clusters the population into <em>species</em> (similar topologies are put together) so that members of the same species will have similar fitness values. Given two organisms <code>x</code> and <code>y</code>, NEAT proposes a function <code>δ = δ(x, y)</code> that measures how similar the organisms are. Hence, with a so-called <em>compatibility threshold</em> <code>δ_t</code>, it is possible to cluster the population by comparing <code>δ &lt; δ_t</code>. The fitness <code>f_x</code> of the organism <code>x</code>, belonging to species <code>s_i</code>, is a function of <code>s_i</code> and the reward <code>r_x</code> of the network: <code>f_x=f(s_i, r_x)</code>. The reward can be the accuracy of the network or any other measure of its performance in a given task. To see the actual functions <code>δ</code> and <code>f_x</code>, consult page 13 of the <a href="http://nn.cs.utexas.edu/keyword?stanley:ec02" target="_blank" rel="noopener" blank="_target">NEAT paper</a>. </p>
+<p><strong>Generating the offspring</strong>. In each generation, the <code>N</code> organisms will be replaced by the offspring. The offspring is <em>per species</em>. 25% of the offspring (<code>A = 0.25 * N</code>) results from mutation without crossover, and (presumably) 75% (<code>B = 0.75 * N</code>) from reproduction (crossover + posterior mutation). The first step for reproduction is to eliminate the lowest-performing organisms from the entire population (the “lowest” criteria is not mentioned in the paper, sorry). Then, for each species <code>s_i</code>, the within-species fitness sum is computed: <code>F_i = sum_all(f_x)</code> for all <code>x</code> in <code>s_i</code>. Next, we require the proportion of <code>F_i</code> with respect to all species: <code>o_i = F_i / sum_all(F_j)</code>. Each species <code>s_i</code> gets assigned a number <code>o_i * B</code> of offspring. It is mating time now!</p>
+<p>The specifics of mutation and crossover are as follow:</p>
+<ul>
+<li><strong>Mutation</strong>: There are three mutation operators: <em>weight perturbation</em>, <em>add connection</em>, and <em>add node</em>. I am skipping the first one because we do not need it for WANNs. <u>Add connection</u> selects two unconnected nodes (presumably at random) and links them with a new random weight <code>w</code>. <u>Add node</u> selects an existing connection (presumably at random too) with some weight <code>w_c</code> and splits it in two, placing a new node in between. The new weights are <code>w_in = 1</code> and <code>w_out = w_c</code>. The old connection is set to <code>DISABLED</code>.</li>
+<li><strong>Crossover</strong>: When crossing over, genomes <code>x</code> and <code>y</code> are lined up as shown in Figure 2. If two genes <code>x[i]</code> and <code>y[i]</code> have the same <code>innovation number</code> they are called <em>matching genes</em>. If they are not matching, then they are either <em>disjoint</em> (if the <code>innovation number</code> of <code>x[i]</code> &lt;= <code>y[i]</code>, or vice versa) or <em>excess</em> (if the <code>innovation number</code> of <code>x[i]</code> &gt; <code>y[i]</code>, or vice versa). At the time of selecting the genes for the offspring, <em>matching genes</em> are selected at random from either parent and <em>excess</em>/<em>disjoint</em> are taken from the most-fit parent (if they are equally fit then they are chosen randomly).</li>
+</ul>
+<img src="/ml-summaries/2020/03/09/wanns/wanns-neat-crossover.png" class="" title="Figure 2. Crossover in NEAT. The top numbers represent the &#96;innovation number&#96;">
+
+<br/>
+There are some specifics about the NEAT implementation that you can consult on pages 14 and 15 (section: "Performance Evaluations") of the paper. But roughly, this is what you need to understand WANNs.
+
+<h3 id="Dominance-relations"><a href="#Dominance-relations" class="headerlink" title="Dominance relations"></a>Dominance relations</h3><p><em>Dominance</em> is a concept from <a href="https://en.wikipedia.org/wiki/Multi-objective_optimization" target="_blank">multi-objective optimization</a>, where we want to find the optimal value (minimum or maximum) for a set of functions. That is, <code>min( f_1(x), f_2(x), ... , f_k(x) )</code>, where <code>k</code> is the number of objectives. <code>x* in X</code> is called a <em>feasible solution</em>, and <code>X</code> is the <em>feasible set</em> of decision vectors. A vector <code>z* := &lt; f_1(x*), f_2(x*), ... f_k(x*)&gt;</code> for a feasible solution <code>x*</code> is called an <em>outcome</em>.</p>
+<p>A feasible solution <code>x1</code> is said to (Pareto) <strong>dominate</strong> a solution <code>x2</code> (for minimization) if:</p>
+<ol>
+<li><code>f_i(x1) &lt;= f_i(x_2)</code> <strong>for all</strong> indices <code>i in {1, 2, ..., k}</code></li>
+<li><code>f_j(x1) &lt; f_i(x_2)</code> <strong>for at least one</strong> index <code>j in {1, 2, ..., k}</code></li>
+</ol>
+<p>In words, <code>x1</code> dominates <code>x2</code> if <code>x2</code> does not improve any of the objectives <code>f_i</code>  when compared to <code>x1</code>, and there is at least one <code>f_i</code> for which <code>x1</code> is strictly better than <code>x2</code>.</p>
+<p>A solution <code>x*</code> is called <em>Pareto optimal</em> (a.k.a. non-dominated or Pareto efficient) if there does not exist another solution that dominates it. The set <code>F</code> of Pareto optimal solutions is called <em>Pareto front</em>.</p>
+<p>It is possible to group the solutions <code>x_i</code> in fronts. First, using the set <code>X</code> we need to compute the first front <code>F_1</code>. Second, we compute <code>X = X - F1</code>  and compute a new front <code>F_2</code>. We can repeat this process until <code>X</code> is empty. An efficient algorithm for this process is on <a href="http://www.dmi.unict.it/mpavone/nc-cs/materiale/NSGA-II.pdf" target="_blank">Page 3 of this paper</a> cited by Gaier and Ha.</p>
+<h2 id="The-approach-in-a-nutshell"><a href="#The-approach-in-a-nutshell" class="headerlink" title="The approach in a nutshell"></a>The approach in a nutshell</h2><p>Gaier and Ha propose a search algorithm where the constructed <strong>networks will not be trained</strong>, saving us a lot of computational resources. The core of the algorithm is <a href="#neuroevolution-of-augmenting-topologies-neat">NEAT</a> with some minor modifications:</p>
+<ol>
+<li>The <strong>initial population</strong> is <strong>not uniform</strong>.</li>
+<li><strong>For every architecture a weight</strong> from a set <code>W</code> <strong>is used</strong>. <strong>All neurons</strong> in the architecture  <strong>share this weight</strong> and the network will infer with no training whatsoever. This is repeated for each weight in <code>W</code> (each trial is called a <em>rollout</em>).</li>
+<li>The <strong>fitness considers performance</strong> (without training) over the rollouts <strong>and complexity</strong> of the networks.</li>
+<li>A <strong>modified mutation operator</strong>.</li>
+</ol>
+<p>The algorithm was tested for reinforcement learning and image classification tasks. We just need to elaborate on each of the modifications before looking at the main results.</p>
+<h2 id="Understanding-the-key-elements"><a href="#Understanding-the-key-elements" class="headerlink" title="Understanding the key elements"></a>Understanding the key elements</h2><h3 id="The-initial-set-of-architectures"><a href="#The-initial-set-of-architectures" class="headerlink" title="The initial set of architectures"></a>The initial set of architectures</h3><p>Similarly to NEAT, the algorithm starts with <em>minimal topologies</em>. By looking at an example in the WANNs’ paper (see Figure 3) it is possible to infer a small modification on what a minimal topology is. Instead of fully connected inputs/outputs, WANNs start from <strong>a population of networks with zero hidden nodes, which have inputs <em>randomly</em> connected to outputs</strong>.</p>
+<img src="/ml-summaries/2020/03/09/wanns/wanns-minimal-net.png" class="" title="Figure 3: Example of a minimal topology">
+
+<h3 id="The-rollouts"><a href="#The-rollouts" class="headerlink" title="The rollouts"></a>The rollouts</h3><p>The rollouts are the key aspect of how to measure the performance of the architectures. <em>A rollout</em> is the evaluation of a network with one shared weight. The weights considered are in the set <code>W = [-2, -1, -0.5, +0.5, +1, +2]</code>. For each weight in <code>W</code>, the network is evaluated. For RL that means obtaining a cumulative reward, and for image classification the accuracy.</p>
+<p>After all evaluations, three measures are computed:</p>
+<ol>
+<li><code>f_1</code>: The average of the rollouts’ rewards/accuracies.</li>
+<li><code>f_2</code>: The maximum reward/accuracy among rollouts.</li>
+<li><code>f_3</code>: The number of connections in the architecture.</li>
+</ol>
+<h3 id="The-fitness-values"><a href="#The-fitness-values" class="headerlink" title="The fitness values"></a>The fitness values</h3><p>Once the rollouts are finished, the <strong>fitness</strong> is measured. The authors propose a stochastic approach:</p>
+<ul>
+<li>20% of the time, the fitness is the rank after sorting by <em>dominance relations</em> of the objectives <code>f_1</code> and <code>f_2</code>.</li>
+<li>80% of the time, the fitness is the rank after sorting by <em>dominance relations</em> of the objectives <code>f_1</code> and <code>f_3</code>.</li>
+</ul>
+<h3 id="The-mutation-operators"><a href="#The-mutation-operators" class="headerlink" title="The mutation operators"></a>The mutation operators</h3><p>The architectures mutate via <strong>three operators</strong>:</p>
+<ul>
+<li><strong>Insert new node</strong>: Same as in NEAT, but without weights and with an activation function sampled at random from the set <code>[linear, step, sin, cosine, Gaussian, tanh, sigmoid, absolute-value, negative linear, ReLU]</code>.</li>
+<li><strong>Add new connection</strong>: Same as in NEAT, but without weights.</li>
+<li><strong>Change existing activation</strong>: An existing node is chosen (presumably at random). Then, an activation function <code>F</code> is randomly selected from the set <code>[linear, step, sin, cosine, Gaussian, tanh, sigmoid, absolute-value, negative linear, ReLU]</code> and the node gets <code>F</code> assigned.</li>
+</ul>
+<h2 id="Experiments-and-results"><a href="#Experiments-and-results" class="headerlink" title="Experiments and results"></a>Experiments and results</h2><p>As mentioned earlier, WANNs are tested on reinforcement learning (RL) and image classification tasks. To avoid rephrasing the paper, I limit myself to present an overview of the findings, emphasizing what I consider the most interesting. I recommend checking all the results in the <a href="https://weightagnostic.github.io" target="_blank">paper’s interactive version</a>.</p>
+<h3 id="Reinforcement-Learning"><a href="#Reinforcement-Learning" class="headerlink" title="Reinforcement Learning"></a>Reinforcement Learning</h3><h4 id="Experiment-setup"><a href="#Experiment-setup" class="headerlink" title="Experiment setup"></a>Experiment setup</h4><p>The reinforcement learning tasks solved with WANNs are <code>CartPoleSwingUp</code>, <code>BipedalWalker-v2</code>, and <code>CarRacing-v0</code> (all of them available as <a href="https://gym.openai.com/envs/" target="_blank">OpenAI Gym environments</a>). For each of the tasks, a WANN is constructed by following the approach we have discussed so far. To compare the WANN’s performance, the authors use a <a href="https://worldmodels.github.io" target="_blank">fixed topology from literatue</a> as a baseline. For the two architectures, the next experiments are repeated 100 times per task:</p>
+<ol>
+<li>Solve the task with random weights (drawn from <code>Uniform(-2, 2)</code>) assigned per neuron.</li>
+<li>Solve the task after training (tuning) of random weights (drawn from <code>Uniform(-2, 2)</code>) assigned per neuron.</li>
+<li>Solve the task with a shared random weight (drawn from <code>Uniform(-2, 2)</code>).</li>
+<li>Solve the task after training (tuning) of a shared random weight (drawn from <code>Uniform(-2, 2)</code>).</li>
+</ol>
+<p>This setting makes a lot of sense to me. By comparing the performance using non-tuned random weights, we can see how dependent an architecture is on the weights. If it performs poorly, then the architecture might not be adequate for the task and relies too much on the weights. On the other hand, when tuning the weights, important things can be revealed: 1) if the architecture performed poorly with random weights but improved with tuning, then it could suggest that the tuned weights <em>hide</em> the fact that the architecture is not adequate by design; 2) if a WANN does not improve much when tuned, the topology itself might be “overfitting” (which is not necessarily a bad thing because then we could forget about <em>general-purpose</em> architectures and start designing <em>ad hoc</em> topologies for our tasks).</p>
+<h4 id="Results"><a href="#Results" class="headerlink" title="Results"></a>Results</h4><p>The reported rewards are shown in Figure 4. In short, WANNs outperform the baseline in 11/12 experiments. In general, the baseline appears very dependent on the tuned weights (very low or even negative rewards when randomly assigned). A WANN has the same drawback for random weights but it is way more robust to a random shared weight. </p>
+<p>For the rest of the analysis let’s forget about the baseline. A WANN achieves its maximum performance after tuning of non-shared weights, which also improves its variance. The reward obtained with random shared weights is still low compared to the maximum obtained and shows important variance. When the shared weight is tuned, the performance becomes more certain and importantly higher but not the highest.</p>
+<img src="/ml-summaries/2020/03/09/wanns/wanns-results-rl.png" class="" title="Figure 4: Results for the RL experiments, as reported in the original paper.">
+
+<br/>
+With these numbers, it is not clear yet what the essential advantage of a WANN is. To clear this out, Gaier and Ha help us with an analysis of the topologies discovered, from which I will simply rephrase the main claims. WANNs are simple and modular. They seem to ignore non-important inputs and use fewer connections than state-of-the-art approaches. An important note made in the paper is that the complexity of the topologies increases at each generation, capturing one by one the principal elements of the task. For example, in the `CartPoleSwingUp` task, a topology from an early generation captures the position-velocity relation, and in a later generation, the same topology adds nodes on top that refine the balancing (check the <a href="https://weightagnostic.github.io" target="_blank">interactive paper</a> for an animation of this behavior).
+
+<h3 id="Image-Classification"><a href="#Image-Classification" class="headerlink" title="Image Classification"></a>Image Classification</h3><h4 id="Experiment-setup-1"><a href="#Experiment-setup-1" class="headerlink" title="Experiment setup"></a>Experiment setup</h4><p>For Image Classification the setup changes. The task is now <a href="http://yann.lecun.com/exdb/mnist/" target="_blank">MNIST</a>. This time the baselines are a simple Linear Regressor and a Two-Layer CNN. Presumably, the next steps are followed 100 times too: </p>
+<ol>
+<li>Solve the task with a shared random weight (drawn from <code>Uniform(-2, 2)</code>).</li>
+<li>Solve the task after training (tuning) of a shared random weight (drawn from <code>Uniform(-2, 2)</code>).</li>
+<li>Instantiate the WNN with <code>m</code> different weights (without training) so that we end up with <code>m</code> WNNs with the same topology and just the shared weight differing. Build an ensemble where each of these networks is given a single vote so that the predicted value for an image is the digit that received the most votes.</li>
+<li>Repeat 3, but training each member of the ensemble (I assume) individually.</li>
+</ol>
+<p>A strong justification for trying with an ensemble in this task is not clear to me. My impression is that since the results did not show as strong as in RL, they experimented with an alternative that could strengthen WANNs. The task itself is simple to me, considering that a simple Two-Layer CNN is already a strong baseline for MNIST.</p>
+<h4 id="Results-1"><a href="#Results-1" class="headerlink" title="Results"></a>Results</h4><p>The results are in Figure 5. This time WANNs do not seem as well-performing as in the RL experiment. As I said, maybe that’s the reason behind trying with an ensemble. I do not have much to say about this experiment, just that it seems to me that there is much room for improvement in the experiment setup. </p>
+<img src="/ml-summaries/2020/03/09/wanns/wanns-results-ic.png" class="" title="Figure 5: Results for the Image Classification experiments, as reported in the original paper.">
+
+<h2 id="My-feelings-about-the-paper"><a href="#My-feelings-about-the-paper" class="headerlink" title="My feelings about the paper"></a>My feelings about the paper</h2><p>I really like this paper. From the moment I knew about it, I was impressed for its simplicity and power. We are always worried about the best weights of a network and put too much care in their training to compare the architectures, but this work shows that a single shared weight can help us to compare and build architectures efficiently.</p>
+<p>My main takeover is that a WANN has a more adequate topology because forgetting about the weights and training makes the algorithm to focus on the arrangement of layers. However, I am a bit worried about the variance of the random shared weight (Figure 4). Also, I am not clear on the selection of the baseline for the RL tasks. Are they convenient? Are there better baselines? I must admit I did not read the baseline’s paper. If I have the time to do it, I will update this part of the summary with more insights.</p>
+<p>I like the fitness function, wich uses dominance relations. By considering different objectives, the estimation of the performance looks more solid to me. </p>
+<p>Concerning the image classification experiment, I have to say that I was expecting a bit more of discussion but it is great that Gaier and Ha spent time to show us WANNs in that domain too. To me, WANNs are not looking so powerful there, but it is also true that researchers have made much progress in image classification and sometimes is unfair for the novel approaches to compete with state-of-the-art architectures in the field, even though they have excellent ideas as it is the case of Gaier and Ha.</p>
+<p>In general, I think it would be good to see how other search methods (e.g. RL) behave with WANNs, specially because of the recent success of NAS with RL. I would also like to see the running times, because although the search does not look expensive, solving the RL environments could be. As it is the case with some papers from the Big Guys, the results look amazing but the computational resources could be out of our reach.</p>
+<p>This is all for my summary. I hope this helps you to understand and possibly implement the paper. Do not forget to share :)</p>
+
+  </div>
+</article>
+
+    <div class="blog-post-comments">
+        <div id="disqus_thread">
+            <noscript>Please enable JavaScript to view the comments.</noscript>
+        </div>
+    </div>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/ml-summaries/">Home</a></li>
+         
+          <li><a href="/ml-summaries/about/">About</a></li>
+         
+          <li><a href="/ml-summaries/archives/">Writing</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Introduction"><span class="toc-number">1.</span> <span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Background"><span class="toc-number">2.</span> <span class="toc-text">Background</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Neural-Architecture-Search-NAS"><span class="toc-number">2.1.</span> <span class="toc-text">Neural Architecture Search (NAS)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Evolutionary-Algorithms-EAs"><span class="toc-number">2.2.</span> <span class="toc-text">Evolutionary Algorithms (EAs)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NeuroEvolution-of-Augmenting-Topologies-NEAT"><span class="toc-number">2.3.</span> <span class="toc-text">NeuroEvolution of Augmenting Topologies (NEAT)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dominance-relations"><span class="toc-number">2.4.</span> <span class="toc-text">Dominance relations</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The-approach-in-a-nutshell"><span class="toc-number">3.</span> <span class="toc-text">The approach in a nutshell</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Understanding-the-key-elements"><span class="toc-number">4.</span> <span class="toc-text">Understanding the key elements</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#The-initial-set-of-architectures"><span class="toc-number">4.1.</span> <span class="toc-text">The initial set of architectures</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#The-rollouts"><span class="toc-number">4.2.</span> <span class="toc-text">The rollouts</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#The-fitness-values"><span class="toc-number">4.3.</span> <span class="toc-text">The fitness values</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#The-mutation-operators"><span class="toc-number">4.4.</span> <span class="toc-text">The mutation operators</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Experiments-and-results"><span class="toc-number">5.</span> <span class="toc-text">Experiments and results</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Reinforcement-Learning"><span class="toc-number">5.1.</span> <span class="toc-text">Reinforcement Learning</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Experiment-setup"><span class="toc-number">5.1.1.</span> <span class="toc-text">Experiment setup</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Results"><span class="toc-number">5.1.2.</span> <span class="toc-text">Results</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Image-Classification"><span class="toc-number">5.2.</span> <span class="toc-text">Image Classification</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Experiment-setup-1"><span class="toc-number">5.2.1.</span> <span class="toc-text">Experiment setup</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Results-1"><span class="toc-number">5.2.2.</span> <span class="toc-text">Results</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#My-feelings-about-the-paper"><span class="toc-number">6.</span> <span class="toc-text">My feelings about the paper</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/" target="_blank" rel="noopener"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&text=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&title=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&is_video=false&description=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Weight Agnostic Neural Networks (Gaier and Ha)&body=Check out this article: https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&title=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&title=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&title=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&title=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&name=Weight Agnostic Neural Networks (Gaier and Ha)&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://gomerudo.github.io/ml-summaries/2020/03/09/wanns/&t=Weight Agnostic Neural Networks (Gaier and Ha)" target="_blank" rel="noopener"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2020
+    Jorge Gomez
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/ml-summaries/">Home</a></li>
+         
+          <li><a href="/ml-summaries/about/">About</a></li>
+         
+          <li><a href="/ml-summaries/archives/">Writing</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+<link rel="stylesheet" href="/ml-summaries/lib/font-awesome/css/all.min.css">
+
+
+<link rel="stylesheet" href="/ml-summaries/lib/justified-gallery/css/justifiedGallery.min.css">
+
+
+    <!-- jquery -->
+
+<script src="/ml-summaries/lib/jquery/jquery.min.js"></script>
+
+
+<script src="/ml-summaries/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+
+<!-- clipboard -->
+
+  
+<script src="/ml-summaries/lib/clipboard/clipboard.min.js"></script>
+
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/ml-summaries/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+    <script type="text/javascript">
+        var disqus_shortname = 'ml-summaries';
+
+        (function(){
+            var dsq = document.createElement('script');
+            dsq.type = 'text/javascript';
+            dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }());
+    </script>
+
+
+</body>
+</html>
