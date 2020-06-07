@@ -5,7 +5,7 @@ date: 2020-06-06 00:45:22
 
 # About the founder
 
-Hi! I am Jorge, from Mexico City. I like to see myself as an engineer that focuses a lot on modern Machine Learning these days. If you want to know more about me, please check my personal website.
+Hi! I am Jorge, from Mexico City. I like to see myself as an engineer that focuses a lot on modern Machine Learning these days. If you want to know more about me, please check <a href="https://gomerudo.github.io" target="_blank">my website</a>
 
 # The short story behind the blog
 
