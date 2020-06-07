@@ -121,11 +121,11 @@ theme_config:
     # (see https://fontawesome.com/icons?d=gallery&s=brands);
     # only 'mail' is an exception.
     social_links:
-      user: https://gomerudo.github.io
+      creative-commons-by: https://gomerudo.github.io
       github: https://github.com/gomerudo
-      twitter: https://twitter.com/gomerudo
       linkedin: http://linkedin.com/in/jgomezrb/
-      mail: j.gomezrb.dev@gmail.com
+      twitter: https://twitter.com/gomerudo
+    #   mail: j.gomezrb.dev@gmail.com
     
     # Customize the overview with displaying a tagcloud on the index page.
     # Options: https://hexo.io/docs/helpers.html#tagcloud
